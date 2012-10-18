@@ -151,11 +151,30 @@
 
 		getDate: function() {
 			var d = this.getUTCDate();
+			if (d === null) {
+				return null;
+			}
 			return new Date(d.getTime() + (d.getTimezoneOffset()*60000))
 		},
 
 		getUTCDate: function() {
-			return this.date;
+			// If the value of the DOM element we're wrapping doesn't match
+			// the formatted value of this.date, then the UI and this.date are
+			// not in sync - which generally means parseDate() failed
+			if (!this.getValueIsDate()) {
+				return null;
+			}
+			else {
+				return this.date;
+			}
+		},
+
+		// Checks that the DOM value matches the formatted string value of this.date
+		// Returns true if the two strings match, false if they don't
+		getValueIsDate: function() {
+			var v = this.getValue();
+			var formatted = DPGlobal.formatDate(this.date, this.format, this.language);
+			return formatted === v;
 		},
 
 		setDate: function(d) {
@@ -177,6 +196,10 @@
 			} else {
 				this.element.prop('value', formatted);
 			}
+		},
+
+		getValue: function() {
+			return this.isInput ? this.element.prop('value') : this.element.data('date') || this.element.find('input').prop('value');
 		},
 
 		setStartDate: function(startDate){
@@ -211,7 +234,7 @@
 
 		update: function(){
 			this.date = DPGlobal.parseDate(
-				this.isInput ? this.element.prop('value') : this.element.data('date') || this.element.find('input').prop('value'),
+				this.getValue(),
 				this.format, this.language
 			);
 			if (this.date < this.startDate) {
